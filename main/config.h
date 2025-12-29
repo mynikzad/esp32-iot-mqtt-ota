@@ -1,14 +1,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define FW_VERSION "ESP-MQTT-01 v1.0.27"
+#define FW_VERSION "ESP-MQTT-01 v1.0.26"
 
 //#define WIFI_SSID "Niki-D100"
 //#define WIFI_PASS "@nikzad1364"
 
 
-#define WIFI_SSID "MYSSID"
-#define WIFI_PASS "MYPASSWORD"
+#define WIFI_SSID "MySSID"
+#define WIFI_PASS "MyPASS"
 
 
 
