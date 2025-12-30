@@ -14,9 +14,11 @@ The project is part of a larger system including a backend API and a simple UI, 
 - Modular firmware structure
 - Task-based design using FreeRTOS
 - Sensor management with enable/disable control
+- Commands are decoupled using a message queue to avoid blocking system tasks
 
 ---
-
+The firmware is designed to remain responsive even during network interruptions or OTA operations.
+---
 ## High-Level Flow
 
 1. ESP32 boots and initializes system components  
@@ -24,21 +26,21 @@ The project is part of a larger system including a backend API and a simple UI, 
 3. Establishes a secure MQTT connection (TLS)  
 4. Subscribes to command topics  
 5. Processes incoming commands (control, configuration, OTA)  
-6. Runs sensor and system tasks in an event-driven manner  
+6. Runs sensor and system tasks in an event-driven manner using non-blocking queues
 
 ---
 
 ## Project Structure (ESP32)
 
 esp32/
-├── main/
-│ ├── wifi/
-│ ├── mqtt/
-│ ├── ota/
-│ ├── sensors/
-│ └── system/
-├── components/
-└── config/
+|--main
+|   |--wifi/
+|   |--mqtt/
+|   |--ota/
+|   |--sensors/
+|   |--system/
+|--components/
+|--config/
 
 ---
 

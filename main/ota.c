@@ -1,3 +1,4 @@
+// OTA is triggered by MQTT command
 #include "ota.h"
 #include "esp_ota_ops.h"
 
@@ -119,7 +120,7 @@ void ota_start(const char *url, const char *expected_sha256_hex)
         expected_sha256_hex++;
     // case-insensitive compare
     ESP_LOGI(TAG, "expected sha: %s", expected_sha256_hex);
-ESP_LOGI(TAG, "actual   sha: %s", sha_hex);
+    ESP_LOGI(TAG, "actual   sha: %s", sha_hex);
     if (strcasecmp(sha_hex, expected_sha256_hex) != 0)
     {
         set_error("sha256_mismatch");

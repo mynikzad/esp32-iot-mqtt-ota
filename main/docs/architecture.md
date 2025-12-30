@@ -7,4 +7,4 @@ This project is built as a simple but practical IoT setup.
 - Firmware updates are handled through OTA, so the device can be updated remotely without physical access.
 - The backend manages MQTT messages and exposes APIs that are used by a basic UI to control the device.
 
-The goal of this structure is to keep the firmware modular and easy to extend while staying close to real-world IoT use cases.
+The structure is intentionally kept simple to make the firmware easy to reason about, debug, and extend in real-world IoT deployments.

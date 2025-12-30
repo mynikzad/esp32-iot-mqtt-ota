@@ -1,3 +1,8 @@
+// Entry point:
+// 1. Init WiFi
+// 2. Init MQTT
+// 3. Create system tasks
+
 //& "C:\Espressif\frameworks\esp-idf-v5.3.1\export.ps1"
 #include "wifi.h"
 #include "mqtt.h"
@@ -35,20 +40,23 @@ void app_main(void)
     esp_log_level_set("wifi", ESP_LOG_NONE);
     ESP_LOGI(TAG_Main, "Partion----------HERE-----------------");
     const esp_partition_t *p = esp_ota_get_next_update_partition(NULL);
-  if (p) {
-    ESP_LOGW("PART", "Partition info:");
-    ESP_LOGW("PART", "  label=%s", p->label);
-    ESP_LOGW("PART", "  type=%d", p->type);
-    ESP_LOGW("PART", "  subtype=%d", p->subtype);
-    ESP_LOGW("PART", "  address=0x%" PRIx32, (uint32_t)p->address);
-    ESP_LOGW("PART", "  size=%" PRIu32 " bytes", (uint32_t)p->size);
-    ESP_LOGW("PART", "  encrypted=%d", p->encrypted);
-} else {
-    ESP_LOGE("PART", "No OTA partition found!");
-}
-
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    if (p)
+    {
+        ESP_LOGW("PART", "Partition info:");
+        ESP_LOGW("PART", "  label=%s", p->label);
+        ESP_LOGW("PART", "  type=%d", p->type);
+        ESP_LOGW("PART", "  subtype=%d", p->subtype);
+        ESP_LOGW("PART", "  address=0x%" PRIx32, (uint32_t)p->address);
+        ESP_LOGW("PART", "  size=%" PRIu32 " bytes", (uint32_t)p->size);
+        ESP_LOGW("PART", "  encrypted=%d", p->encrypted);
+    }
+    else
+    {
+        ESP_LOGE("PART", "No OTA partition found!");
+    }
     ESP_LOGI(TAG_Main, "Partion----------End-----------------");
+    vTaskDelay(pdMS_TO_TICKS(5000));
+
     //-------------------------
 
     esp_task_wdt_deinit();
@@ -57,13 +65,12 @@ void app_main(void)
         .trigger_panic = true,
     };
 
-    
     esp_err_t err = esp_task_wdt_init(&wdt_cfg);
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
     {
         ESP_LOGI(TAG_Main, "esp_task_wdt_init failed: %s", esp_err_to_name(err));
     }
-    
+
     //----------------------------------------------------------------
     crash_counter_init();
     // Increase crash count (device just rebooted)
