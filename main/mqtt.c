@@ -1,3 +1,7 @@
+// MQTT message callback
+// This function is called by the MQTT client library when a message arrives.
+// It must stay lightweight and only forward commands to the message queue.
+
 #include "mqtt.h"
 #include "config.h"
 #include "esp_log.h"
@@ -14,6 +18,7 @@ static const char *TAG = "MQTT";
 static volatile bool mqtt_connected = false;
 static esp_mqtt_client_handle_t client = NULL;
 
+// Keep MQTT callback lightweight to avoid blocking the client loop
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     esp_mqtt_event_handle_t event = event_data;
@@ -34,7 +39,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
     case MQTT_EVENT_DATA:
     {
-
+        // Incoming MQTT commands are handled directly here
+        // Commands are lightweight and do not use queues
         char topic[event->topic_len + 1];
         memcpy(topic, event->topic, event->topic_len);
         topic[event->topic_len] = '\0';
@@ -45,23 +51,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         if (strcmp(topic, "device/esp32-01/cmd") == 0)
         {
             handle_command_json(payload, "device/esp32-01/ack");
-        }else if (strcmp(topic, "adel/led") == 0) { handle_command_json(payload, "adel/ack"); }
+        }
+        else if (strcmp(topic, "adel/led") == 0)
+        {
+            handle_command_json(payload, "adel/ack");
+        }
         free(payload);
         break;
-        /*  ESP_LOGI("CMD", "No Read Command reach clasic --------->");
-          if (strncmp(event->data, "on", event->data_len) == 0)
-          {
-              gpio_set_level(LED_GPIO, 1);
-              esp_mqtt_client_publish(client, "adel/led", "ESP SET ON", 0, 1, 1);
-              ESP_LOGI(TAG, "LED turned ON");
-          }
-          else if (strncmp(event->data, "off", event->data_len) == 0)
-          {
-              gpio_set_level(LED_GPIO, 0);
-              esp_mqtt_client_publish(client, "adel/led", "ESP SET OFF", 0, 1, 1);
-              ESP_LOGI(TAG, "LED turned OFF");
-          }
-          break;*/
     }
     case MQTT_EVENT_DISCONNECTED:
         mqtt_connected = false;
@@ -141,18 +137,21 @@ void mqtt_publish_sensor_data(const char *json_str)
 // mqtt.c
 void mqtt_publish(const char *topic, const char *payload)
 {
-    if (mqtt_get_client() && mqtt_connected) {
-        //esp_mqtt_client_publish(mqtt_client_handle, topic, payload, 0, 0, 0);
-          esp_mqtt_client_publish(client, topic, payload, 0, 1, 0);
-    } else {
+    if (mqtt_get_client() && mqtt_connected)
+    {
+        // esp_mqtt_client_publish(mqtt_client_handle, topic, payload, 0, 0, 0);
+        esp_mqtt_client_publish(client, topic, payload, 0, 1, 0);
+    }
+    else
+    {
         ESP_LOGW("MQTT_PUB", "Not connected, drop publish");
     }
 }
-esp_mqtt_client_handle_t mqtt_get_client(void) {
-    return client;  // اسم کلاینت تو
+esp_mqtt_client_handle_t mqtt_get_client(void)
+{
+    return client; // اسم کلاینت تو
 }
 void mqtt_set_led(int v)
 {
     gpio_set_level(LED_GPIO, v ? 1 : 0);
 }
-

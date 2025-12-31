@@ -95,11 +95,11 @@ static void sensor_task(void *pv)
             char *json_str = cJSON_PrintUnformatted(root);
             if (json_str)
             {
-                // منتشر کن — تابع mqtt_publish_sensor_data باید در mqtt.c پیاده‌سازی شده باشه
-                // mqtt_publish_sensor_data(json_str); این منتفق شد removeme
+                // Forward sensor data to publishing task via queue (non-blocking)
+
                 msg_queue_send(json_str);
                 ESP_LOGI(TAG, "Published: %s", json_str);
-                cJSON_free(json_str); // طبق استفادهٔ قبلی در پروژه‌ات
+                cJSON_free(json_str);
             }
             cJSON_Delete(root);
         }
@@ -158,10 +158,10 @@ int sensor_is_enabled(void)
 {
     return sensor_enabled;
 }
-void sensor_read_once(float *temperature, float *humidity, float *pressure) {
+void sensor_read_once(float *temperature, float *humidity, float *pressure)
+{
     double t = (double)esp_timer_get_time() / 1000000.0;
     *temperature = 22.0f + 3.0f * sinf(2.0f * M_PI * 0.1f * (float)t);
-    *humidity    = 50.0f + 10.0f * sinf(2.0f * M_PI * 0.05f * (float)t);
-    *pressure    = 1013.0f + (((float)rand() / (float)RAND_MAX) - 0.5f) * 3.0f;
+    *humidity = 50.0f + 10.0f * sinf(2.0f * M_PI * 0.05f * (float)t);
+    *pressure = 1013.0f + (((float)rand() / (float)RAND_MAX) - 0.5f) * 3.0f;
 }
-

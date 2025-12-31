@@ -111,7 +111,7 @@ if (esp_task_wdt_add(NULL) != ESP_OK) {
         if (mqtt_is_connected()) {
             if (msg_queue_receive(buffer, sizeof(buffer))) {
                 mqtt_publish_sensor_data(buffer);
-                ESP_LOGI("QUEUE_SENDER", "MQTT published: %s", buffer);
+                ESP_LOGI("QUEUE_SENDER", "MQTT published: %s", buffer);   
             }
         }
         vTaskDelay(pdMS_TO_TICKS(200));
