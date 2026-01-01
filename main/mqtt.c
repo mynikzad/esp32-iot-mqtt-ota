@@ -41,6 +41,17 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     {
         // Incoming MQTT commands are handled directly here
         // Commands are lightweight and do not use queues
+
+        if (event->topic_len <= 0)
+        {
+            ESP_LOGW(TAG, "Invalid MQTT message: missing topic");
+            break;
+        }
+        else if(event->data_len <= 0)
+        {
+            ESP_LOGW(TAG, "Invalid MQTT message: missing payload");
+            break;
+        }
         char topic[event->topic_len + 1];
         memcpy(topic, event->topic, event->topic_len);
         topic[event->topic_len] = '\0';
