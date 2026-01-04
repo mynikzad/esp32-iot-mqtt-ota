@@ -15,12 +15,10 @@
 #include "esp_netif_ip_addr.h"
 #include "nvs_flash.h"
 #include "ota.h"
-           // تو قبلا اضافه کردی ولی مطمئن شو هست
+// تو قبلا اضافه کردی ولی مطمئن شو هست
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <stdio.h>
-
-
 
 static int dynamic_log_level = ESP_LOG_INFO;
 static const char *TAG = "COMMANDS";
@@ -72,7 +70,8 @@ void commands_deinit(void)
 }
 
 // ---------- OTA task helper ----------
-typedef struct {
+typedef struct
+{
     char url[256];
     char sha[129]; // 64 byte hex + null  -> 128+1
 } ota_params_t;
@@ -81,7 +80,8 @@ typedef struct {
 static void ota_task(void *arg)
 {
     ota_params_t *p = (ota_params_t *)arg;
-    if (!p) {
+    if (!p)
+    {
         vTaskDelete(NULL);
         return;
     }
@@ -111,14 +111,20 @@ void handle_command_json(const char *json, const char *reply_topic)
 
     // 1) LED command
     cJSON *state = cJSON_GetObjectItem(root, "state");
-    if (cJSON_IsString(state)) {
+    if (cJSON_IsString(state))
+    {
         const char *v = state->valuestring;
         int led_val = 0;
-        if (strcmp(v, "on") == 0) {
+        if (strcmp(v, "on") == 0)
+        {
             led_val = 1;
-        } else if (strcmp(v, "off") == 0) {
+        }
+        else if (strcmp(v, "off") == 0)
+        {
             led_val = 0;
-        } else {
+        }
+        else
+        {
             publish_error(reply_topic, "led", "invalid_value");
             cJSON_Delete(root);
             return;
@@ -131,7 +137,7 @@ void handle_command_json(const char *json, const char *reply_topic)
         publish_ack(reply_topic, "ok", "led", extra);
         cJSON_Delete(root);
         return;
-}
+    }
 
     //-------------
     else if (cJSON_GetObjectItem(root, "get_sensors"))
@@ -325,21 +331,23 @@ void handle_command_json(const char *json, const char *reply_topic)
 
             // Allocate params for OTA task
             ota_params_t *p = (ota_params_t *)malloc(sizeof(ota_params_t));
-            if (!p) {
+            if (!p)
+            {
                 publish_error(reply_topic, "ota", "alloc_failed");
                 cJSON_Delete(root);
                 return;
             }
 
             // copy safely
-            strncpy(p->url, url->valuestring, sizeof(p->url)-1);
-            p->url[sizeof(p->url)-1] = '\0';
-            strncpy(p->sha, sha->valuestring, sizeof(p->sha)-1);
-            p->sha[sizeof(p->sha)-1] = '\0';
+            strncpy(p->url, url->valuestring, sizeof(p->url) - 1);
+            p->url[sizeof(p->url) - 1] = '\0';
+            strncpy(p->sha, sha->valuestring, sizeof(p->sha) - 1);
+            p->sha[sizeof(p->sha) - 1] = '\0';
 
             // Create OTA task (detached). Stack 8192 is safe for HTTP+TLS; priority 5 is fine.
             BaseType_t r = xTaskCreate(ota_task, "ota_task", 8192, p, 5, NULL);
-            if (r != pdPASS) {
+            if (r != pdPASS)
+            {
                 publish_error(reply_topic, "ota", "task_create_failed");
                 free(p);
                 cJSON_Delete(root);

@@ -1,7 +1,7 @@
 // MQTT message callback
 // This function is called by the MQTT client library when a message arrives.
 // It must stay lightweight and only forward commands to the message queue.
-
+#include "esp_ota_ops.h"
 #include "mqtt.h"
 #include "config.h"
 #include "esp_log.h"
@@ -11,6 +11,7 @@
 #include "crash_counter.h"
 #include "cJSON.h"
 #include "command.h"
+#include "utils.h"
 extern const uint8_t certs_ca_crt_start[] asm("_binary_certs_ca_crt_start");
 extern const uint8_t certs_ca_crt_end[] asm("_binary_certs_ca_crt_end");
 static volatile bool need_reconnect = false;
@@ -28,6 +29,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "MQTT before connect");
         break;
     case MQTT_EVENT_CONNECTED:
+        ESP_LOGI(TAG, "-----ROLLBACK CANCEL-2-----");
+        esp_ota_mark_app_valid_cancel_rollback();
         ESP_LOGI(TAG, "MQTT connected");
         crash_counter_reset();
         esp_mqtt_client_subscribe(event->client, "device/esp32-01/cmd", 0);
@@ -35,6 +38,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         esp_mqtt_client_subscribe(event->client, "adel/led", 0);
         backoff_reset();
         mqtt_connected = true;
+
         break;
 
     case MQTT_EVENT_DATA:
@@ -47,7 +51,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             ESP_LOGW(TAG, "Invalid MQTT message: missing topic");
             break;
         }
-        else if(event->data_len <= 0)
+        else if (event->data_len <= 0)
         {
             ESP_LOGW(TAG, "Invalid MQTT message: missing payload");
             break;

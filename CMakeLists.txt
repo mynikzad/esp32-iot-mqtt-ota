@@ -3,4 +3,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(project-name)
+
+idf_build_set_property(PARTITION_TABLE_FILENAME partitions.csv)
+
+project(project_name)

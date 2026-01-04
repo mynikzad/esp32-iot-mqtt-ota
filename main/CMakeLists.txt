@@ -1,3 +1,5 @@
+
+
 idf_component_register(
     SRCS 
         "app_main.c"
@@ -10,6 +12,7 @@ idf_component_register(
         "crash_counter.c"
         "command.c"
         "ota.c"
+        "utils.c"
     INCLUDE_DIRS "."
     REQUIRES
         freertos
@@ -24,7 +27,5 @@ idf_component_register(
         app_update
         esp_http_client
         mbedtls
-        EMBED_TXTFILES "certs_ca.crt"
-        EMBED_TXTFILES "cert.pem"
-
+        EMBED_TXTFILES "certs_ca.crt" "cert.pem"
 )

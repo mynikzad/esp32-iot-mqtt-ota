@@ -25,7 +25,8 @@
 #include "esp_partition.h"
 #include "esp_ota_ops.h"
 #include <inttypes.h>
-
+#include "nvs_flash.h"
+#include "utils.h"
 static const char *TAG_Main = "App Main";
 
 static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -36,6 +37,15 @@ static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, 
 
 void app_main(void)
 {
+    esp_err_t ret = nvs_flash_init();
+
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+        ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
 
     esp_log_level_set("wifi", ESP_LOG_NONE);
     ESP_LOGI(TAG_Main, "Partion----------HERE-----------------");
@@ -86,6 +96,7 @@ void app_main(void)
     ESP_LOGI(TAG_Main, FW_VERSION);
     vTaskDelay(pdMS_TO_TICKS(3000));
     gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
+
     wifi_init();
     wifi_start();
     mqtt_init();
@@ -94,4 +105,6 @@ void app_main(void)
     sensor_manager_start();
     msg_queue_init();
     create_tasks();
+    esp_ota_mark_app_valid_cancel_rollback();
+    log_filter_init();
 }
