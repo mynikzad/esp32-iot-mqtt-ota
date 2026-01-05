@@ -5,6 +5,11 @@
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "backoff.h"
+#include "config_manager.h"
+#include <string.h>
+
+#include "config_manager.h"
+
 static volatile bool wifi_initialized = false;
 static volatile bool wifi_connected = false;
 static const char *TAG_wifi = "WIFI";
@@ -16,7 +21,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
         wifi_connected = false;
-        ESP_LOGE(TAG_wifi, "WiFi disconnected (reason=%d)", ((wifi_event_sta_disconnected_t*)event_data)->reason);
+        ESP_LOGE(TAG_wifi, "WiFi disconnected (reason=%d)", ((wifi_event_sta_disconnected_t *)event_data)->reason);
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
@@ -41,19 +46,21 @@ void wifi_init(void)
 
 void wifi_start(void)
 {
-    wifi_config_t wifi_config =  {
-        .sta = {
-            .ssid = WIFI_SSID,
-            .password = WIFI_PASS}};
+
+    const device_config_t* cfg = config_get();
+    
+    wifi_config_t wifi_config = {0};
+    strcpy((char *)wifi_config.sta.ssid, cfg->wifi_ssid);
+    strcpy((char *)wifi_config.sta.password, cfg->wifi_pass);
+    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
-    
-    
+
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &wifi_event_handler, NULL, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL));
-    
-    
+
     wifi_initialized = true;
     esp_wifi_connect();
 }

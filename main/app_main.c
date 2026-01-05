@@ -27,6 +27,8 @@
 #include <inttypes.h>
 #include "nvs_flash.h"
 #include "utils.h"
+#include "config_manager.h"
+
 static const char *TAG_Main = "App Main";
 
 static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -37,8 +39,9 @@ static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, 
 
 void app_main(void)
 {
-    esp_err_t ret = nvs_flash_init();
 
+    esp_err_t ret = nvs_flash_init();
+    config_init(); // NVS init
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {

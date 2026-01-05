@@ -1,7 +1,6 @@
 # ESP32 IoT Device – MQTTs & OTA Enabled
 
-
-This repository contains an ESP32-based IoT device firmware built to behave like a real production IoT client, with a strong focus on reliability, security, and long-term maintainability.  
+This project is an ESP32-based IoT firmware, designed to act like a real production client. The focus is on reliability, security, and keeping the code maintainable over time. 
 It connects securely to a backend using **MQTT over TLS**, supports **remote commands**, and allows **OTA firmware updates**.
 
 
@@ -10,6 +9,7 @@ The project is part of a larger system including a backend API and a simple UI, 
 ---
 
 ## Main Features
+The firmware isn’t overloaded with features — it keeps things clear and robust. Each part (WiFi, MQTT, OTA, sensors) is modular so you can follow the flow easily.
 
 - Secure connection using **MQTTs (TLS)**
 - Command-based control via MQTT topics
@@ -20,9 +20,16 @@ The project is part of a larger system including a backend API and a simple UI, 
 - Commands are decoupled using a message queue to avoid blocking system tasks
 - Focused on clarity and robustness rather than feature completeness
 
+## Configuration Management
+
+The firmware keeps device settings persistent across reboots using NVS.  
+Each configuration block is validated with a CRC and version number, so if data gets corrupted or the structure changes, the system automatically falls back to safe defaults.  
+
+This makes WiFi credentials, MQTT parameters, and other runtime options reliable and upgrade‑friendly.
+
 ---
 ## High-Level Flow
-The firmware is intentionally designed to stay responsive during unstable network conditions and OTA updates, using non-blocking mechanisms and task decoupling.
+The boot-to-connection flow is kept simple: WiFi first, then secure MQTT, then tasks. This way the device stays responsive even if the network is shaky or an OTA update is running.
 
 1. ESP32 boots and initializes system components  
 2. Connects to WiFi  
@@ -68,10 +75,8 @@ Security is treated as a system-level concern and is continuously improved as th
 ---
 
 ## Status
-
-This project is **actively under development**.  
-The current version represents a stable and working baseline. Ongoing work focuses on improving clarity, robustness, and long-term maintainability rather than adding new features.
-
+Right now the firmware is stable enough to run, but I’m still improving clarity and robustness step by step.
+**actively under development**.
 ---
 
 ## Related Components

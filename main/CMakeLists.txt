@@ -13,6 +13,7 @@ idf_component_register(
         "command.c"
         "ota.c"
         "utils.c"
+        "config_manager.c"
     INCLUDE_DIRS "."
     REQUIRES
         freertos

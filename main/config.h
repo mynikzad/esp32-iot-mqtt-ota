@@ -3,8 +3,8 @@
 
 #define FW_VERSION "ESP-MQTT-01 v1.0.27"
 
-#define WIFI_SSID "MYSSID"
-#define WIFI_PASS "MYPASS"
+//#define WIFI_SSID "DLinkIO"
+//#define WIFI_PASS "A@nikzad6300"
 
 #define MQTT_URI "mqtts://192.168.1.3:8883"
 // #define MQTT_URI "mqtt://10.10.10.129:1883"
