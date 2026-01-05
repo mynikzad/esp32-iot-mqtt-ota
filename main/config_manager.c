@@ -2,7 +2,8 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include <string.h>
-
+#include "esp_log.h"
+#include <inttypes.h>
 #define CONFIG_NAMESPACE "storage"
 #define CONFIG_VERSION 1
 
@@ -36,6 +37,8 @@ void config_load_defaults(device_config_t *cfg)
     strcpy(cfg->mqtt_user, "AliUser");
     strcpy(cfg->mqtt_pass, "123");
 
+    cfg->led_state = 0;
+
     cfg->mqtt_enabled = 1;
     cfg->sensor_enabled = 0;
     cfg->sample_interval = 5000;
@@ -61,12 +64,15 @@ void config_load(device_config_t *cfg)
 
     if (nvs_open(CONFIG_NAMESPACE, NVS_READONLY, &handle) != ESP_OK)
     {
+        ESP_LOGW("CONFIG", "NVS open failed → loading defaults");
+        
         config_load_defaults(cfg);
         return;
     }
 
     if (nvs_get_blob(handle, "config", cfg, &size) != ESP_OK)
     {
+        ESP_LOGW("CONFIG", "No config blob → loading defaults");
         nvs_close(handle);
         config_load_defaults(cfg);
         return;
@@ -76,11 +82,28 @@ void config_load(device_config_t *cfg)
 
     uint32_t crc_calc = calc_crc((uint8_t *)cfg, sizeof(device_config_t) - sizeof(uint32_t));
 
+    
+    ESP_LOGI("CONFIG", "CRC calc done");
+    
+    //ESP_LOGI("CONFIG", "Stored CRC = 0x%08X", cfg->crc);
+    //ESP_LOGI("CONFIG", "Calc CRC = %d", crc_calc);
+
+    //ESP_LOGI("CONFIG", "Version stored=%d expected=%d", cfg->version, CONFIG_VERSION);
+
+
+
     if (crc_calc != cfg->crc || cfg->version != CONFIG_VERSION)
     {
+       ESP_LOGE("CONFIG", "CRC mismatch OR Version");
         config_load_defaults(cfg);
         config_save(cfg);
     }
+}
+
+void config_set_led_state(int state)
+{
+    g_config.led_state = state;
+    g_config.crc = calc_crc((uint8_t *)&g_config, sizeof(device_config_t) - sizeof(uint32_t));
 }
 
 void config_init(void)

@@ -5,7 +5,7 @@
 
 typedef struct {
     uint32_t version;
-    uint32_t crc;
+
 
     char wifi_ssid[32];
     char wifi_pass[64];
@@ -13,10 +13,12 @@ typedef struct {
     char mqtt_user[32];
     char mqtt_pass[32];
 
+    uint8_t led_state;
+
     uint8_t mqtt_enabled;
     uint8_t sensor_enabled;
     uint32_t sample_interval;
-
+    uint32_t crc;
 } device_config_t;
 
 void config_init(void);
@@ -24,5 +26,5 @@ void config_save(const device_config_t *cfg);
 void config_load(device_config_t *cfg);
 void config_load_defaults(device_config_t *cfg);
 const device_config_t* config_get(void);
-
+void config_set_led_state(int state);
 #endif

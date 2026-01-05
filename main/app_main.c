@@ -41,7 +41,15 @@ void app_main(void)
 {
 
     esp_err_t ret = nvs_flash_init();
+
     config_init(); // NVS init
+//----------------------TODO: Move to file
+    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
+    const device_config_t *cfg = config_get();
+    mqtt_set_led(cfg->led_state);
+    ESP_LOGI("LED", "Restored LED state = %d", cfg->led_state);
+    vTaskDelay(pdMS_TO_TICKS(5000));
+//-------------------------
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
@@ -68,7 +76,7 @@ void app_main(void)
         ESP_LOGE("PART", "No OTA partition found!");
     }
     ESP_LOGI(TAG_Main, "Partion----------End-----------------");
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    //vTaskDelay(pdMS_TO_TICKS(5000));
 
     //-------------------------
 
@@ -98,7 +106,6 @@ void app_main(void)
     }
     ESP_LOGI(TAG_Main, FW_VERSION);
     vTaskDelay(pdMS_TO_TICKS(3000));
-    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
 
     wifi_init();
     wifi_start();

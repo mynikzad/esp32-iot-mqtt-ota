@@ -25,7 +25,8 @@ The firmware isn’t overloaded with features — it keeps things clear and robu
 The firmware keeps device settings persistent across reboots using NVS.  
 Each configuration block is validated with a CRC and version number, so if data gets corrupted or the structure changes, the system automatically falls back to safe defaults.  
 
-This makes WiFi credentials, MQTT parameters, and other runtime options reliable and upgrade‑friendly.
+This makes WiFi credentials, MQTT parameters, and other runtime options reliable and upgrade-friendly.
+Runtime changes (for example via MQTT commands) are immediately persisted, so the device always restarts in a known, consistent state.
 
 ---
 ## High-Level Flow
@@ -75,8 +76,8 @@ Security is treated as a system-level concern and is continuously improved as th
 ---
 
 ## Status
-Right now the firmware is stable enough to run, but I’m still improving clarity and robustness step by step.
-**actively under development**.
+Right now the firmware is stable enough to run, but I’m still improving clarity and robustness step by step.  
+The project is **actively under development**.
 ---
 
 ## Related Components

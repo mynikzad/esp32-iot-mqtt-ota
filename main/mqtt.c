@@ -12,6 +12,7 @@
 #include "cJSON.h"
 #include "command.h"
 #include "utils.h"
+#include "config_manager.h"
 extern const uint8_t certs_ca_crt_start[] asm("_binary_certs_ca_crt_start");
 extern const uint8_t certs_ca_crt_end[] asm("_binary_certs_ca_crt_end");
 static volatile bool need_reconnect = false;
@@ -169,4 +170,7 @@ esp_mqtt_client_handle_t mqtt_get_client(void)
 void mqtt_set_led(int v)
 {
     gpio_set_level(LED_GPIO, v ? 1 : 0);
+    config_set_led_state(v);
+    config_save(config_get());
+    ESP_LOGI("LED", "Setting LED to %d", v);
 }
