@@ -4,6 +4,9 @@
 #include <string.h>
 #include "esp_log.h"
 #include <inttypes.h>
+#include "mqtt_state.h"
+
+
 #define CONFIG_NAMESPACE "storage"
 #define CONFIG_VERSION 1
 
@@ -65,7 +68,7 @@ void config_load(device_config_t *cfg)
     if (nvs_open(CONFIG_NAMESPACE, NVS_READONLY, &handle) != ESP_OK)
     {
         ESP_LOGW("CONFIG", "NVS open failed → loading defaults");
-        
+
         config_load_defaults(cfg);
         return;
     }
@@ -82,19 +85,16 @@ void config_load(device_config_t *cfg)
 
     uint32_t crc_calc = calc_crc((uint8_t *)cfg, sizeof(device_config_t) - sizeof(uint32_t));
 
-    
     ESP_LOGI("CONFIG", "CRC calc done");
-    
-    //ESP_LOGI("CONFIG", "Stored CRC = 0x%08X", cfg->crc);
-    //ESP_LOGI("CONFIG", "Calc CRC = %d", crc_calc);
 
-    //ESP_LOGI("CONFIG", "Version stored=%d expected=%d", cfg->version, CONFIG_VERSION);
+    // ESP_LOGI("CONFIG", "Stored CRC = 0x%08X", cfg->crc);
+    // ESP_LOGI("CONFIG", "Calc CRC = %d", crc_calc);
 
-
+    // ESP_LOGI("CONFIG", "Version stored=%d expected=%d", cfg->version, CONFIG_VERSION);
 
     if (crc_calc != cfg->crc || cfg->version != CONFIG_VERSION)
     {
-       ESP_LOGE("CONFIG", "CRC mismatch OR Version");
+        ESP_LOGE("CONFIG", "CRC mismatch OR Version");
         config_load_defaults(cfg);
         config_save(cfg);
     }
@@ -110,7 +110,7 @@ void config_init(void)
 {
     nvs_flash_init();
     config_load(&g_config);
-    // config_save(&g_config);
+    mqtt_state_publish();
 }
 
 const device_config_t *config_get(void)

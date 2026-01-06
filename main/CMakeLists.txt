@@ -14,6 +14,7 @@ idf_component_register(
         "ota.c"
         "utils.c"
         "config_manager.c"
+        "mqtt_state.c"
     INCLUDE_DIRS "."
     REQUIRES
         freertos
