@@ -29,5 +29,5 @@ idf_component_register(
         app_update
         esp_http_client
         mbedtls
-        EMBED_TXTFILES "certs_ca.crt" "cert.pem"
+    EMBED_TXTFILES "certs_ca.crt" "cert.pem"
 )

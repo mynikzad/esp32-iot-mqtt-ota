@@ -34,7 +34,7 @@ void config_load_defaults(device_config_t *cfg)
     cfg->version = CONFIG_VERSION;
 
     strcpy(cfg->wifi_ssid, "DLinkIO");
-    strcpy(cfg->wifi_pass, "A@nikzad6300");
+    strcpy(cfg->wifi_pass, "REDACTED_WIFI_PASS");
 
     strcpy(cfg->mqtt_uri, "mqtts://192.168.1.3:8883");
     strcpy(cfg->mqtt_user, "AliUser");

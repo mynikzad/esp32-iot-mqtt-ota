@@ -22,7 +22,7 @@
 #include "mqtt_state.h"
 static int dynamic_log_level = ESP_LOG_INFO;
 static const char *TAG = "COMMANDS";
-
+static bool device_busy = false;
 // helper: publish ack (topic is e.g. device/esp32-01/ack)
 static void publish_ack(const char *reply_topic, const char *status, const char *cmd, const char *req_id, cJSON *extra)
 {
@@ -55,13 +55,15 @@ static void publish_ack(const char *reply_topic, const char *status, const char 
 }
 
 // convenience: error ack
-static void publish_error(const char *reply_topic,  const char *req_id,const char *cmd, const char *reason)
+static void publish_error(const char *reply_topic, const char *req_id, const char *cmd, const char *reason)
 {
     cJSON *extra = cJSON_CreateObject();
-  if (reason)
+    if (extra && reason)
+    {
         cJSON_AddStringToObject(extra, "reason", reason);
-    cJSON_AddStringToObject(extra, "reason", reason);
-    publish_ack(reply_topic, "error",  cmd,req_id,  extra);
+    }
+
+    publish_ack(reply_topic, "error", cmd, req_id, extra);
 }
 
 void commands_init(void)
@@ -110,10 +112,17 @@ void handle_command_json(const char *json, const char *reply_topic)
     cJSON *req_id = cJSON_GetObjectItem(root, "req_id");
     const char *req_id_str = cJSON_IsString(req_id) ? req_id->valuestring : NULL;
 
+    if (device_busy)
+    {
+        publish_error(reply_topic, req_id_str, NULL, "device_busy");
+        cJSON_Delete(root);
+        return;
+    }
     if (!root)
     {
         ESP_LOGW(TAG, "invalid json");
-        publish_error(reply_topic,req_id_str, NULL,  "invalid_json");
+        publish_error(reply_topic, req_id_str, NULL, "invalid_json");
+        device_busy = false;
         return;
     }
 
@@ -135,21 +144,25 @@ void handle_command_json(const char *json, const char *reply_topic)
         {
             publish_error(reply_topic, req_id_str, "led", "invalid_value");
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
 
+        device_busy = true;
         mqtt_set_led(led_val);
 
         cJSON *extra = cJSON_CreateObject();
         cJSON_AddStringToObject(extra, "state", v);
         publish_ack(reply_topic, "ok", "led", req_id_str, extra);
         cJSON_Delete(root);
+        device_busy = false;
         return;
     }
 
     //-------------
     else if (cJSON_GetObjectItem(root, "get_sensors"))
     {
+        device_busy = true;
         float t, h, p;
         sensor_read_once(&t, &h, &p); // تو sensor_manager فردا این را اضافه می‌کنیم
 
@@ -159,6 +172,7 @@ void handle_command_json(const char *json, const char *reply_topic)
         cJSON_AddNumberToObject(extra, "pressure", p);
 
         publish_ack(reply_topic, "ok", "get_sensors", req_id_str, extra);
+        device_busy = false;
         cJSON_Delete(root);
         return;
     }
@@ -172,13 +186,16 @@ void handle_command_json(const char *json, const char *reply_topic)
         {
             publish_error(reply_topic, req_id_str, "sample_rate", "too_small");
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
+        device_busy = true;
         sensor_set_sample_rate(value);
-        mqtt_state_publish(); 
+        mqtt_state_publish();
         cJSON *extra = cJSON_CreateObject();
         cJSON_AddNumberToObject(extra, "sample_rate", value);
         publish_ack(reply_topic, "ok", "sample_rate", req_id_str, extra);
+        device_busy = false;
         cJSON_Delete(root);
         return;
     }
@@ -188,8 +205,9 @@ void handle_command_json(const char *json, const char *reply_topic)
     {
         if (!cJSON_IsString(lv))
         {
-            publish_error(reply_topic,  req_id_str,"log_level", "invalid_type");
+            publish_error(reply_topic, req_id_str, "log_level", "invalid_type");
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
 
@@ -204,8 +222,9 @@ void handle_command_json(const char *json, const char *reply_topic)
             dynamic_log_level = ESP_LOG_ERROR;
         else
         {
-            publish_error(reply_topic,req_id_str, "log_level",  "invalid_value");
+            publish_error(reply_topic, req_id_str, "log_level", "invalid_value");
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
 
@@ -217,6 +236,7 @@ void handle_command_json(const char *json, const char *reply_topic)
         cJSON_AddStringToObject(extra, "level", v);
         publish_ack(reply_topic, "ok", "log_level", req_id_str, extra);
         cJSON_Delete(root);
+        device_busy = false;
         return;
     }
 
@@ -225,6 +245,7 @@ void handle_command_json(const char *json, const char *reply_topic)
     cJSON *sys = cJSON_GetObjectItem(root, "sys");
     if (cJSON_IsString(sys))
     {
+        device_busy = true;
         const char *s = sys->valuestring;
         if (strcmp(s, "reboot") == 0)
         {
@@ -232,44 +253,52 @@ void handle_command_json(const char *json, const char *reply_topic)
             cJSON_AddStringToObject(extra, "action", "rebooting");
             publish_ack(reply_topic, "ok", "reboot", req_id_str, extra);
             vTaskDelay(pdMS_TO_TICKS(200)); // allow ack to go out
+            device_busy = false;
             esp_restart();
             // no return
         }
         else if (strcmp(s, "safe_mode") == 0)
         {
+            device_busy = true;
             crash_counter_reset(); // ensure safe
             cJSON *extra = cJSON_CreateObject();
             cJSON_AddStringToObject(extra, "action", "entering_safe_mode");
-            publish_ack(reply_topic, "ok", "safe_mode",req_id_str, extra);
+            publish_ack(reply_topic, "ok", "safe_mode", req_id_str, extra);
             start_safe_mode_task(); // implement in tasks.c
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
         //-------------
         else if (strcmp(s, "factory_reset") == 0)
         {
+            device_busy = true;
             cJSON *extra = cJSON_CreateObject();
             cJSON_AddStringToObject(extra, "action", "factory_reset");
             publish_ack(reply_topic, "ok", "factory_reset", req_id_str, extra);
             vTaskDelay(pdMS_TO_TICKS(200));
             nvs_flash_erase();
+            device_busy = false;
             esp_restart();
         }
 
         //-----------
         else if (strcmp(s, "get_fw_info") == 0)
         {
+            device_busy = true;
             cJSON *extra = cJSON_CreateObject();
             cJSON_AddStringToObject(extra, "device", "esp32-01");
             cJSON_AddStringToObject(extra, "fw", FW_VERSION);
             // you can add uptime, free heap etc
             cJSON_AddNumberToObject(extra, "free_heap", esp_get_free_heap_size());
             publish_ack(reply_topic, "ok", "info", req_id_str, extra);
+            device_busy = false;
             cJSON_Delete(root);
             return;
         }
         else if (strcmp(s, "get_device_info") == 0)
         {
+            device_busy = true;
             cJSON *resp = cJSON_CreateObject();
 
             // device + firmware
@@ -309,29 +338,34 @@ void handle_command_json(const char *json, const char *reply_topic)
 
             // ACK with full data
             publish_ack(reply_topic, "ok", "get_device_info", req_id_str, resp);
+            device_busy = false;
             cJSON_Delete(root);
             return;
         }
         else if (strcmp(s, "get_logs") == 0)
         {
             // TODO: در آینده یک ring buffer لاگ درست می‌کنی
+            device_busy = true;
             cJSON *extra = cJSON_CreateObject();
             cJSON_AddStringToObject(extra, "logs", "not_implemented_yet");
 
             publish_ack(reply_topic, "ok", "get_logs", req_id_str, extra);
+            device_busy = false;
             cJSON_Delete(root);
             return;
         }
 
         else if (strcmp(s, "ota") == 0)
         {
+            device_busy = true;
             cJSON *url = cJSON_GetObjectItem(root, "url");
             cJSON *sha = cJSON_GetObjectItem(root, "sha256");
 
             if (!cJSON_IsString(url) || !cJSON_IsString(sha))
             {
-                publish_error(reply_topic, req_id_str,  "ota","missing_url_or_sha");
+                publish_error(reply_topic, req_id_str, "ota", "missing_url_or_sha");
                 cJSON_Delete(root);
+                device_busy = false;
                 return;
             }
 
@@ -342,8 +376,9 @@ void handle_command_json(const char *json, const char *reply_topic)
             ota_params_t *p = (ota_params_t *)malloc(sizeof(ota_params_t));
             if (!p)
             {
-                publish_error(reply_topic,req_id_str, "ota",  "alloc_failed");
+                publish_error(reply_topic, req_id_str, "ota", "alloc_failed");
                 cJSON_Delete(root);
+                device_busy = false;
                 return;
             }
 
@@ -357,13 +392,15 @@ void handle_command_json(const char *json, const char *reply_topic)
             BaseType_t r = xTaskCreate(ota_task, "ota_task", 8192, p, 5, NULL);
             if (r != pdPASS)
             {
-                publish_error(reply_topic, req_id_str,"ota",  "task_create_failed");
+                publish_error(reply_topic, req_id_str, "ota", "task_create_failed");
                 free(p);
                 cJSON_Delete(root);
+                device_busy = false;
                 return;
             }
 
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
     }
@@ -372,11 +409,13 @@ void handle_command_json(const char *json, const char *reply_topic)
     cJSON *sensor = cJSON_GetObjectItem(root, "sensor");
     if (cJSON_IsString(sensor))
     {
+        device_busy = true;
         cJSON *enable = cJSON_GetObjectItem(root, "enable");
         if (!cJSON_IsNumber(enable))
         {
-            publish_error(reply_topic,req_id_str, "sensor",  "missing_enable");
+            publish_error(reply_topic, req_id_str, "sensor", "missing_enable");
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
         const char *name = sensor->valuestring;
@@ -391,12 +430,14 @@ void handle_command_json(const char *json, const char *reply_topic)
             cJSON_AddNumberToObject(extra, "enabled", en);
             publish_ack(reply_topic, "ok", "sensor", req_id_str, extra);
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
         else
         {
             publish_error(reply_topic, req_id_str, "sensor", "unknown_sensor");
             cJSON_Delete(root);
+            device_busy = false;
             return;
         }
     }
@@ -404,6 +445,7 @@ void handle_command_json(const char *json, const char *reply_topic)
     {
     }
     // fallback unknown
-    publish_error(reply_topic, req_id_str,NULL,  "unknown_command");
+    publish_error(reply_topic, req_id_str, NULL, "unknown_command");
+    device_busy = false;
     cJSON_Delete(root);
 }

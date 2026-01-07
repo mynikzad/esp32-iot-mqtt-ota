@@ -17,7 +17,7 @@ The firmware isn’t overloaded with features — it keeps things clear and robu
 - Modular firmware structure
 - Task-based design using FreeRTOS
 - Sensor management with enable/disable control
-- Commands are decoupled using a message queue to avoid blocking system tasks
+- Commands and sensor data are decoupled using a bounded message queue with back-pressure and overflow handling
 - Focused on clarity and robustness rather than feature completeness
 
 ## Configuration Management
@@ -40,6 +40,19 @@ The boot-to-connection flow is kept simple: WiFi first, then secure MQTT, then t
 6. Runs sensor and system tasks in an event-driven manner using non-blocking queues
 
 ---
+## Message Flow & Back-Pressure
+
+Incoming commands and outgoing telemetry are passed through a bounded FreeRTOS queue.  
+This prevents fast producers (for example sensors or MQTT callbacks) from overwhelming slower consumers.
+
+When the queue is full:
+- A short back-pressure delay is applied to the producer.
+- Less important messages (such as state or telemetry) may be dropped.
+- Control commands are prioritized to keep the device responsive.
+
+This keeps the system stable under burst load and avoids memory growth or task starvation.
+
+
 The firmware is structured to keep networking, system logic, and hardware interaction clearly separated.
 
 
@@ -77,6 +90,8 @@ Security is treated as a system-level concern and is continuously improved as th
 
 ## Status
 Right now the firmware is stable enough to run, but I’m still improving clarity and robustness step by step.  
+Recent work focused on improving load behavior and resilience under high message rates.
+
 The project is **actively under development**.
 ---
 

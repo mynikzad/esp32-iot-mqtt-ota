@@ -97,7 +97,7 @@ static void sensor_task(void *pv)
             {
                 // Forward sensor data to publishing task via queue (non-blocking)
 
-                msg_queue_send(json_str);
+                msg_queue_send(json_str,MSG_TYPE_SENSOR);
                 ESP_LOGI(TAG, "Published: %s", json_str);
                 cJSON_free(json_str);
             }
