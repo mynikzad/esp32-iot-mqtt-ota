@@ -41,15 +41,6 @@ void app_main(void)
 {
 
     esp_err_t ret = nvs_flash_init();
-
-    config_init(); // NVS init
-//----------------------TODO: Move to file
-    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
-    const device_config_t *cfg = config_get();
-    mqtt_set_led(cfg->led_state);
-    ESP_LOGI("LED", "Restored LED state = %d", cfg->led_state);
-    vTaskDelay(pdMS_TO_TICKS(5000));
-//-------------------------
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
@@ -57,6 +48,17 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+    crash_counter_init();
+
+    //----------------------------------------------------------------------
+
+    config_init(); // NVS init
+                   //----------------------TODO: Move to file
+    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
+    const device_config_t *cfg = config_get();
+    ESP_LOGI("LED", "Restored LED state = %d", cfg->led_state);
+    mqtt_set_led(cfg->led_state);
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
     esp_log_level_set("wifi", ESP_LOG_NONE);
     ESP_LOGI(TAG_Main, "Partion----------HERE-----------------");
@@ -76,7 +78,7 @@ void app_main(void)
         ESP_LOGE("PART", "No OTA partition found!");
     }
     ESP_LOGI(TAG_Main, "Partion----------End-----------------");
-    //vTaskDelay(pdMS_TO_TICKS(5000));
+    // vTaskDelay(pdMS_TO_TICKS(5000));
 
     //-------------------------
 
@@ -93,7 +95,7 @@ void app_main(void)
     }
 
     //----------------------------------------------------------------
-    crash_counter_init();
+
     // Increase crash count (device just rebooted)
     crash_counter_increment();
     // Check Safe Mode
@@ -105,7 +107,11 @@ void app_main(void)
         return; // do NOT start normal system
     }
     ESP_LOGI(TAG_Main, FW_VERSION);
-    vTaskDelay(pdMS_TO_TICKS(3000));
+
+    const device_config_t *cfgA = config_get();
+    ESP_LOGI("TEST", "SSID = %s", cfgA->wifi_ssid);
+    ESP_LOGI("TEST", "PASS = %s", cfgA->wifi_pass);
+    vTaskDelay(pdMS_TO_TICKS(7000));
 
     wifi_init();
     wifi_start();

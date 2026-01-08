@@ -14,6 +14,7 @@ The firmware isn’t overloaded with features — it keeps things clear and robu
 - Secure connection using **MQTTs (TLS)**
 - Command-based control via MQTT topics
 - **OTA firmware update** support
+- WiFi credentials are configured via menuconfig (not hardcoded)
 - Modular firmware structure
 - Task-based design using FreeRTOS
 - Sensor management with enable/disable control
@@ -84,6 +85,10 @@ partitions
 - MQTT communication is encrypted using TLS
 - Certificates are loaded on the device
 - Sensitive values (WiFi, credentials) can be configured separately
+
+- ### Build-time WiFi Configuration
+   WiFi SSID and Password are now configurable via menuconfig (Kconfig.projbuild).
+   This removes hardcoded credentials and improves maintainability and security.
 
 Security is treated as a system-level concern and is continuously improved as the project evolves.
 ---

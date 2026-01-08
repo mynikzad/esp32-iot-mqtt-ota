@@ -5,7 +5,7 @@
 #include "esp_log.h"
 #include <inttypes.h>
 #include "mqtt_state.h"
-
+#include "sdkconfig.h"
 
 #define CONFIG_NAMESPACE "storage"
 #define CONFIG_VERSION 1
@@ -32,9 +32,10 @@ void config_load_defaults(device_config_t *cfg)
     memset(cfg, 0, sizeof(*cfg));
 
     cfg->version = CONFIG_VERSION;
+    //READ From Menu Config
 
-    strcpy(cfg->wifi_ssid, "DLinkIO");
-    strcpy(cfg->wifi_pass, "REDACTED_WIFI_PASS");
+    strcpy(cfg->wifi_ssid, CONFIG_WIFI_SSID);
+    strcpy(cfg->wifi_pass, CONFIG_WIFI_PASSWORD);
 
     strcpy(cfg->mqtt_uri, "mqtts://192.168.1.3:8883");
     strcpy(cfg->mqtt_user, "AliUser");

@@ -58,7 +58,9 @@ void crash_counter_increment(void)
         crash_count = 0;
     }
 
-    crash_count++;
+    //crash_count++;
+    crash_count=0;
+    ESP_LOGW("CrashCounter"," Here CrashCounter");
     last_crash_time = now;
 
     nvs_handle_t nvs;

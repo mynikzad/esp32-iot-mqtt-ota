@@ -40,6 +40,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         esp_mqtt_client_subscribe(event->client, "adel/led", 0);
         backoff_reset();
         mqtt_connected = true;
+        //---------------------
+
+        //-------------------------
+
         mqtt_state_publish();
         break;
 
@@ -168,11 +172,14 @@ esp_mqtt_client_handle_t mqtt_get_client(void)
 {
     return client; // اسم کلاینت تو
 }
+
+//TODO: ghabl az mqtt vasl she nabayad publish kone fix 
+
 void mqtt_set_led(int v)
 {
     gpio_set_level(LED_GPIO, v ? 1 : 0);
     config_set_led_state(v);
     config_save(config_get());
     ESP_LOGI("LED", "Setting LED to %d", v);
-    mqtt_state_publish();
+    //mqtt_state_publish();
 }
