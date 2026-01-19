@@ -28,7 +28,7 @@
 #include "nvs_flash.h"
 #include "utils.h"
 #include "config_manager.h"
-
+#include "actuator_pwm.h"
 static const char *TAG_Main = "App Main";
 
 static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -120,7 +120,7 @@ void app_main(void)
     sensor_manager_init();
     sensor_manager_start();
     msg_queue_init();
+    actuator_pwm_init();
     create_tasks();
-    esp_ota_mark_app_valid_cancel_rollback();
     log_filter_init();
 }

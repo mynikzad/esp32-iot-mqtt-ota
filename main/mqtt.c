@@ -81,6 +81,11 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
     }
     case MQTT_EVENT_DISCONNECTED:
+
+        ESP_LOGI(TAG,"MQTT LOST actuator_shutdown");
+        //TODO : ERROR actuator_shutdown();
+        vTaskDelay(pdMS_TO_TICKS(50));
+
         mqtt_connected = false;
         ESP_LOGE(TAG, "MQTT disconnected (network/TLS/broker issue)");
         break;
@@ -109,7 +114,6 @@ void mqtt_init(void)
             .authentication.password = MQTT_PASS,
         },
         .session = {.keepalive = 120, .disable_clean_session = false}};
-
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
 }
@@ -173,7 +177,7 @@ esp_mqtt_client_handle_t mqtt_get_client(void)
     return client; // اسم کلاینت تو
 }
 
-//TODO: ghabl az mqtt vasl she nabayad publish kone fix 
+// TODO: ghabl az mqtt vasl she nabayad publish kone fix
 
 void mqtt_set_led(int v)
 {
@@ -181,5 +185,5 @@ void mqtt_set_led(int v)
     config_set_led_state(v);
     config_save(config_get());
     ESP_LOGI("LED", "Setting LED to %d", v);
-    //mqtt_state_publish();
+    // mqtt_state_publish();
 }

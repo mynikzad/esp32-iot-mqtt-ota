@@ -20,6 +20,9 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
+        //ESP_LOGI(TAG_wifi,"WIFI LOST actuator_shutdown");
+        //TODO : ERROR actuator_shutdown();
+        vTaskDelay(pdMS_TO_TICKS(50));        
         wifi_connected = false;
         ESP_LOGE(TAG_wifi, "WiFi disconnected (reason=%d)", ((wifi_event_sta_disconnected_t *)event_data)->reason);
     }

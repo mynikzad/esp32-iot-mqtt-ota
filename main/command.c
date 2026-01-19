@@ -20,6 +20,9 @@
 #include "freertos/task.h"
 #include <stdio.h>
 #include "mqtt_state.h"
+#include "actuator_pwm.h"
+
+static bool actuator_busy = false;
 static int dynamic_log_level = ESP_LOG_INFO;
 static const char *TAG = "COMMANDS";
 static bool device_busy = false;
@@ -92,7 +95,8 @@ static void ota_task(void *arg)
         vTaskDelete(NULL);
         return;
     }
-
+    //TODO: ERRROR actuator_shutdown();
+    vTaskDelay(pdMS_TO_TICKS(50));
     ESP_LOGI(TAG, "ota_task: starting OTA for %s", p->url);
     ota_start(p->url, p->sha); // blocking: download -> write -> reboot on success
 
@@ -249,11 +253,14 @@ void handle_command_json(const char *json, const char *reply_topic)
         const char *s = sys->valuestring;
         if (strcmp(s, "reboot") == 0)
         {
+
             cJSON *extra = cJSON_CreateObject();
             cJSON_AddStringToObject(extra, "action", "rebooting");
             publish_ack(reply_topic, "ok", "reboot", req_id_str, extra);
             vTaskDelay(pdMS_TO_TICKS(200)); // allow ack to go out
             device_busy = false;
+            //TODO: ERRROR actuator_shutdown();
+            vTaskDelay(pdMS_TO_TICKS(50));
             esp_restart();
             // no return
         }
@@ -444,6 +451,39 @@ void handle_command_json(const char *json, const char *reply_topic)
     else if (cJSON_GetObjectItem(root, "get_info"))
     {
     }
+
+    cJSON *motor = cJSON_GetObjectItem(root, "motor_power");
+    if (cJSON_IsNumber(motor))
+    {
+        int p = motor->valueint;
+        if (p < 0 || p > 100)
+        {
+            ESP_LOGI(TAG, "Wrong pwm Power should 0-100 . power set  : %d", p);
+            publish_error(reply_topic, req_id_str, "motor", "invalid_range");
+            cJSON_Delete(root);
+            return;
+        }
+        device_busy = true;
+        //-------------
+        if (actuator_busy)
+        {
+            publish_error(reply_topic, req_id_str, "motor", "actuator_busy");
+            return;
+        }
+        actuator_busy = true;
+        actuator_ramp_to(p);
+        actuator_busy = false;
+        //-------------
+        cJSON *extra = cJSON_CreateObject();
+        cJSON_AddNumberToObject(extra, "power", p);
+        ESP_LOGI(TAG, "Wrong pwm Power should 0-100 . power set  : %d", p);
+        publish_ack(reply_topic, "ok", "motor", req_id_str, extra);
+
+        device_busy = false;
+        cJSON_Delete(root);
+        return;
+    }
+
     // fallback unknown
     publish_error(reply_topic, req_id_str, NULL, "unknown_command");
     device_busy = false;

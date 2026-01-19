@@ -32,7 +32,7 @@ void config_load_defaults(device_config_t *cfg)
     memset(cfg, 0, sizeof(*cfg));
 
     cfg->version = CONFIG_VERSION;
-    //READ From Menu Config
+    // READ From Menu Config
 
     strcpy(cfg->wifi_ssid, CONFIG_WIFI_SSID);
     strcpy(cfg->wifi_pass, CONFIG_WIFI_PASSWORD);
@@ -69,7 +69,7 @@ void config_load(device_config_t *cfg)
     if (nvs_open(CONFIG_NAMESPACE, NVS_READONLY, &handle) != ESP_OK)
     {
         ESP_LOGW("CONFIG", "NVS open failed → loading defaults");
-
+        //TODO : Check for nvs_close(handle) need of not  .just one time  some issu happend if used 
         config_load_defaults(cfg);
         return;
     }

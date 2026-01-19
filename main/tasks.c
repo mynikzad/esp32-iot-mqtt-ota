@@ -44,6 +44,9 @@ void safe_mode_task(void *pv)
         ESP_LOGW("SAFE_MODE", "WDT add failed for safe_mode_task");
     }
     gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT); // LED
+    //TODO : ERROR actuator_shutdown();
+    vTaskDelay(pdMS_TO_TICKS(50));
+    //TODO : ERROR sensor_set_enabled(0);
 
     while (1)
     {
@@ -133,7 +136,25 @@ void mqtt_queue_sender_task(void *pv)
         vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
+//-----------------------------Create for check system Live
+void CheckDeviceVolt(void *pv)
+{
 
+    if (esp_task_wdt_add(NULL) != ESP_OK)
+    {
+        ESP_LOGW(TAG_TASK, "WDT add failed for Device Check Volt");
+    }
+    while (1)
+    {
+        esp_task_wdt_reset(); // ← مهم
+      /* TODO : ERROR  if (power_get_voltage() < 3.0)
+        {
+            system_enter_fail_safe();
+        }*/
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
+}
+//-----------------------------
 // TODO: its not good enaph i should fix it late
 void rollback_watchdog_task(void *pvParameters)
 {
@@ -152,4 +173,5 @@ void create_tasks(void)
     xTaskCreate(mqtt_reconnect_task, "m_recon", 4096, NULL, 5, NULL);
     xTaskCreate(mqtt_queue_sender_task, "q_sender", 4096, NULL, 5, NULL);
     xTaskCreate(rollback_watchdog_task, "rollback_wd", 4096, NULL, 5, NULL);
+    xTaskCreate(CheckDeviceVolt, "CheckVoltage", 2048, NULL, 5, NULL);
 }
