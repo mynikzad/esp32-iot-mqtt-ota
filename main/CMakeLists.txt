@@ -16,6 +16,7 @@ idf_component_register(
         "config_manager.c"
         "mqtt_state.c"
         "actuator_pwm.c"
+        "MyTest.c"
     INCLUDE_DIRS "."
     REQUIRES
         freertos

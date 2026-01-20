@@ -11,6 +11,7 @@
 #include "driver/gpio.h"
 #include "crash_counter.h"
 #include "esp_ota_ops.h"
+#include "MyTest.h"
 
 // static const char *TAG1 = "TASKS";
 static const char *TAG_TASK = "TASKS";
@@ -44,7 +45,7 @@ void safe_mode_task(void *pv)
         ESP_LOGW("SAFE_MODE", "WDT add failed for safe_mode_task");
     }
     gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT); // LED
-    //TODO : ERROR actuator_shutdown();
+    actuator_shutdown();
     vTaskDelay(pdMS_TO_TICKS(50));
     //TODO : ERROR sensor_set_enabled(0);
 
@@ -166,6 +167,36 @@ void rollback_watchdog_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
+void pwm_visual_test_task(void *pvParameters)
+{
+     // ⬅️ اضافه کردن این تسک به WDT سیستمی
+    if (esp_task_wdt_add(NULL) != ESP_OK)
+    {
+        ESP_LOGW(TAG_TASK, "WDT add failed for pwm_visual_test_task");
+    }
+    
+    ESP_LOGI("PWM_VISUAL_TEST", "Starting visual PWM ramp test.");
+
+    while (1)
+    {
+        esp_task_wdt_reset(); // 
+        // تست افزایش از 0 تا 100
+        actuator_ramp_to(100);
+        vTaskDelay(pdMS_TO_TICKS(1000)); // توقف در اوج به مدت 1 ثانیه
+
+        // تست کاهش از 100 تا 0
+        actuator_ramp_to(0);
+        vTaskDelay(pdMS_TO_TICKS(1000)); // توقف در حداقل به مدت 1 ثانیه
+        
+        // برای تکرار سریع‌تر، می‌توانید این دیلی را حذف یا کم کنید.
+        // vTaskDelay(pdMS_TO_TICKS(500)); 
+    }
+
+    // اگر از حلقه خارج شد (که نباید شود)، تسک را پاک کنید.
+    //vTaskDelete(NULL);
+}
+
+
 void create_tasks(void)
 {
     xTaskCreate(heartbeat_task, "hb", 4096, NULL, 5, NULL);
@@ -173,5 +204,6 @@ void create_tasks(void)
     xTaskCreate(mqtt_reconnect_task, "m_recon", 4096, NULL, 5, NULL);
     xTaskCreate(mqtt_queue_sender_task, "q_sender", 4096, NULL, 5, NULL);
     xTaskCreate(rollback_watchdog_task, "rollback_wd", 4096, NULL, 5, NULL);
+     xTaskCreatePinnedToCore(pwm_visual_test_task, "pwm_visual_test", 4096, NULL, 5, NULL, 1);
     xTaskCreate(CheckDeviceVolt, "CheckVoltage", 2048, NULL, 5, NULL);
 }
