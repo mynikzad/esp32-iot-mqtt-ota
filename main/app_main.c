@@ -29,6 +29,8 @@
 #include "utils.h"
 #include "config_manager.h"
 #include "MyTest.h"
+#include "state_manager.h"
+
 static const char *TAG_Main = "App Main";
 
 static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -57,7 +59,8 @@ void app_main(void)
     gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
     const device_config_t *cfg = config_get();
     ESP_LOGI("LED", "Restored LED state = %d", cfg->led_state);
-    mqtt_set_led(cfg->led_state);
+    //mqtt_set_led(cfg->led_state); TODO : check maybe this function shoukd be removed
+     state_apply();
     vTaskDelay(pdMS_TO_TICKS(5000));
 
     esp_log_level_set("wifi", ESP_LOG_NONE);

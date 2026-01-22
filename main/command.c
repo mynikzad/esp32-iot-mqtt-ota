@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include "mqtt_state.h"
 #include "MyTest.h"
+#include "state_manager.h"
 
 static bool actuator_busy = false;
 static int dynamic_log_level = ESP_LOG_INFO;
@@ -95,7 +96,7 @@ static void ota_task(void *arg)
         vTaskDelete(NULL);
         return;
     }
-    //TODO: ERRROR actuator_shutdown();
+    // TODO: ERRROR actuator_shutdown();
     vTaskDelay(pdMS_TO_TICKS(50));
     ESP_LOGI(TAG, "ota_task: starting OTA for %s", p->url);
     ota_start(p->url, p->sha); // blocking: download -> write -> reboot on success
@@ -153,8 +154,8 @@ void handle_command_json(const char *json, const char *reply_topic)
         }
 
         device_busy = true;
-        mqtt_set_led(led_val);
-
+        // mqtt_set_led(led_val); TODO : check may be need be removed whole function ,  now we use :state_update_led(led_val);
+        state_update_led(led_val);
         cJSON *extra = cJSON_CreateObject();
         cJSON_AddStringToObject(extra, "state", v);
         publish_ack(reply_topic, "ok", "led", req_id_str, extra);
@@ -194,8 +195,7 @@ void handle_command_json(const char *json, const char *reply_topic)
             return;
         }
         device_busy = true;
-        sensor_set_sample_rate(value);
-        mqtt_state_publish();
+        state_update_sample_rate(value);
         cJSON *extra = cJSON_CreateObject();
         cJSON_AddNumberToObject(extra, "sample_rate", value);
         publish_ack(reply_topic, "ok", "sample_rate", req_id_str, extra);
@@ -259,7 +259,7 @@ void handle_command_json(const char *json, const char *reply_topic)
             publish_ack(reply_topic, "ok", "reboot", req_id_str, extra);
             vTaskDelay(pdMS_TO_TICKS(200)); // allow ack to go out
             device_busy = false;
-            //TODO: ERRROR actuator_shutdown();
+            // TODO: ERRROR actuator_shutdown();
             vTaskDelay(pdMS_TO_TICKS(50));
             esp_restart();
             // no return
@@ -276,6 +276,26 @@ void handle_command_json(const char *json, const char *reply_topic)
             device_busy = false;
             return;
         }
+        //---------------
+        else if (strcmp(s, "decommission") == 0)
+        {
+            device_busy = true;
+            cJSON *extra = cJSON_CreateObject();
+            cJSON_AddStringToObject(extra, "action", "decommissioning_credential_wipe");
+            publish_ack(reply_topic, "ok", "decommission", req_id_str, extra);
+            vTaskDelay(pdMS_TO_TICKS(200));
+
+            // TODO: Should change :        nvs_flash_erase_partition(NVS_PARTITION_CREDENTIALS); // تغییر NVS_PARTITION_CREDENTIALS
+            //  می‌توانید بخش‌های دیگری را هم در صورت نیاز اضافه کنید
+
+            device_busy = false;
+            cJSON *extra2 = cJSON_CreateObject();
+            cJSON_AddStringToObject(extra2, "status", "success");
+            publish_ack(reply_topic, "ok", "decommission", req_id_str, extra2);
+            cJSON_Delete(extra2);
+            return;
+        }
+
         //-------------
         else if (strcmp(s, "factory_reset") == 0)
         {
@@ -430,8 +450,7 @@ void handle_command_json(const char *json, const char *reply_topic)
         // For now handle only bme280
         if (strcmp(name, "bme280") == 0)
         {
-            sensor_set_enabled(en); // implement in sensor_manager
-            mqtt_state_publish();
+            state_update_sensor_enabled(en);
             cJSON *extra = cJSON_CreateObject();
             cJSON_AddStringToObject(extra, "sensor", name);
             cJSON_AddNumberToObject(extra, "enabled", en);

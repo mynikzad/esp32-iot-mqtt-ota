@@ -1,3 +1,7 @@
+## Design Decisions
+## Known Limitations
+## Future Work
+
 # ESP32 IoT Device – MQTTs & OTA Enabled
 
 This project is an ESP32-based IoT firmware, designed to act like a real production client. The focus is on reliability, security, and keeping the code maintainable over time. 
@@ -30,6 +34,37 @@ This makes WiFi credentials, MQTT parameters, and other runtime options reliable
 Runtime changes (for example via MQTT commands) are immediately persisted, so the device always restarts in a known, consistent state.
 
 ---
+
+## State Layer Architecture (Persistent, Reproducible Behavior)
+
+With this update, the firmware now follows a **state-driven architecture**.  
+Instead of directly controlling hardware through incoming commands, all behavior is now derived from a central **State Manager** that acts as the single source of truth.
+
+### Core Principles
+
+- **Commands modify state — not hardware directly.**
+- Every state change (like `sample_interval` or `sensor_enabled`) is written to NVS for persistence.
+- On boot, the system calls `state_apply()` to restore these values to hardware.
+- The current state is automatically published to MQTT retained topics.
+- Hardware reacts only through state transitions, making reboot and reconnection perfectly consistent.
+
+This guarantees:
+- Full **reproducibility** after reboot  
+- **Single point of control** for each hardware feature  
+- Clear separation between *Command Handling*, *State Persistence*, and *Hardware Drivers*  
+
+### Example
+
+| Function type               | Responsibility                                              |
+|------------------------------|-------------------------------------------------------------|
+| `config_set_*()`             | Save value to NVS and validate with CRC                    |
+| `state_update_*()`           | Update runtime state, apply side effects, publish MQTT     |
+| `state_apply()`              | Restore state after boot and apply to hardware             |
+
+This layer ensures that the ESP32 behaves deterministically across MQTT reconnects, OTA updates, and power cycles.
+
+---
+
 ## High-Level Flow
 The boot-to-connection flow is kept simple: WiFi first, then secure MQTT, then tasks. This way the device stays responsive even if the network is shaky or an OTA update is running.
 
@@ -56,6 +91,11 @@ This keeps the system stable under burst load and avoids memory growth or task s
 
 The firmware is structured to keep networking, system logic, and hardware interaction clearly separated.
 
+## Commands update state.  
+State is persisted and published.  
+Hardware is driven only from state.
+
+This keeps behavior consistent across reboots and MQTT reconnects.
 
 ## Project Structure (ESP32)
 

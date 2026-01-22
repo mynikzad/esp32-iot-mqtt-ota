@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include "mqtt_state.h"
 #include "sdkconfig.h"
+#include <stdbool.h>
 
 #define CONFIG_NAMESPACE "storage"
 #define CONFIG_VERSION 1
@@ -117,4 +118,14 @@ void config_init(void)
 const device_config_t *config_get(void)
 {
     return &g_config;
+}
+void config_set_sample_interval(uint32_t interval)
+{
+    g_config.sample_interval = interval;
+    g_config.crc = calc_crc((uint8_t *)&g_config,sizeof(device_config_t) - sizeof(uint32_t));
+}
+ void  config_set_sensor_enabled(bool enabled )
+{
+    g_config.sensor_enabled=enabled;
+    g_config.crc = calc_crc((uint8_t *)&g_config,sizeof(device_config_t) - sizeof(uint32_t));
 }

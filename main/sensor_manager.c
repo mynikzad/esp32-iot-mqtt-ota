@@ -97,7 +97,7 @@ static void sensor_task(void *pv)
             {
                 // Forward sensor data to publishing task via queue (non-blocking)
 
-                msg_queue_send(json_str,MSG_TYPE_SENSOR);
+                msg_queue_send(json_str, MSG_TYPE_SENSOR);
                 ESP_LOGI(TAG, "Published: %s", json_str);
                 cJSON_free(json_str);
             }
@@ -147,6 +147,8 @@ void sensor_set_sample_rate(int rate_ms)
 void sensor_set_enabled(int enabled)
 {
     sensor_enabled = enabled ? 1 : 0;
+    if (sensor_enabled && !sensor_manager_is_running())
+        sensor_manager_start();
     ESP_LOGI(TAG, "sensor enabled = %d", sensor_enabled);
 }
 int sensor_get_sample_rate(void)
