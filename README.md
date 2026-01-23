@@ -1,15 +1,13 @@
-## Design Decisions
-## Known Limitations
-## Future Work
+# Executive Summary
+This repository implements an IoT control system based on ESP32 and ESP-IDF. It includes WiFi, MQTT, TLS security, sensor reading, actuator control, OTA updates, and crash recovery mechanisms. The main goal of this project is to create a robust, secure, and extensible IoT device with OTA capability and fault tolerance.
+The design emphasizes deterministic behavior, recoverability after failure, and production-oriented communication patterns rather than demo-style implementations.
 
-# ESP32 IoT Device – MQTTs & OTA Enabled
-
-This project is an ESP32-based IoT firmware, designed to act like a real production client. The focus is on reliability, security, and keeping the code maintainable over time. 
-It connects securely to a backend using **MQTT over TLS**, supports **remote commands**, and allows **OTA firmware updates**.
-
-
-The project is part of a larger system including a backend API and a simple UI, but the main focus here is the **ESP32 firmware design and communication flow**.
-
+## Project Scope and Architecture
+- **Platform:** ESP32 with ESP-IDF (v5.x)
+- **Main functionalities:** WiFi connectivity, MQTT communication over TLS, sensor management (temperature, humidity, pressure), actuator PWM control, OTA update support, crash counters for safe mode.
+- **Key modules:** `app_main.c` initializes WiFi, MQTT, sensors, manages tasks; `mqtt.c` handles secure MQTT; `config_manager.c` manages configurations stored in NVS; `crash_counter.c` tracks crashes within a time window.
+- **Certificates:** Embedded in the binary (`cert.pem`, `certs_ca.crt`) for HTTPS/MQTT TLS.
+- **Architecture Diagram:**
 ---
 
 ## Main Features
@@ -35,9 +33,9 @@ Runtime changes (for example via MQTT commands) are immediately persisted, so th
 
 ---
 
-## State Layer Architecture (Persistent, Reproducible Behavior)
+## State Layer Architecture (Single Source of Truth)
 
-With this update, the firmware now follows a **state-driven architecture**.  
+The firmware now follows a **state-driven architecture**.  
 Instead of directly controlling hardware through incoming commands, all behavior is now derived from a central **State Manager** that acts as the single source of truth.
 
 ### Core Principles
@@ -91,10 +89,6 @@ This keeps the system stable under burst load and avoids memory growth or task s
 
 The firmware is structured to keep networking, system logic, and hardware interaction clearly separated.
 
-## Commands update state.  
-State is persisted and published.  
-Hardware is driven only from state.
-
 This keeps behavior consistent across reboots and MQTT reconnects.
 
 ## Project Structure (ESP32)
@@ -117,28 +111,44 @@ components
 config
 partitions
 
+## Key Files and Their Responsibilities
+- `app_main.c`: System initialization, WiFi, MQTT, sensors, task creation, crash check, OTA.
+- `crash_counter.c`: Tracks and manages crash counts to enable Safe Mode.
+- `config_manager.c`: Loads, saves, and validates configuration in NVS with CRC.
+- `mqtt.c`: Manages MQTT connection, security, and command reception.
+- `command.c`: Parses JSON commands, manages system actions (reboot, OTA, updates).
+- `backoff.c`: Implements exponential backoff for retries.
+- `actuator_pwm.c`: Currently empty; planned for PWM-based actuator control.
 
 
-
-## Security Notes
+## Security and Certificates
 
 - MQTT communication is encrypted using TLS
 - Certificates are loaded on the device
 - Sensitive values (WiFi, credentials) can be configured separately
 
+Certificates (`cert.pem`, `certs_ca.crt`) are embedded into the binary via `CMakeLists.txt` to facilitate TLS-secured MQTT communication.  
+For enhanced security, future plans include external storage or hardware security modules to protect private keys.
+
 - ### Build-time WiFi Configuration
    WiFi SSID and Password are now configurable via menuconfig (Kconfig.projbuild).
    This removes hardcoded credentials and improves maintainability and security.
+   
 
 Security is treated as a system-level concern and is continuously improved as the project evolves.
----
 
 ## Status
-Right now the firmware is stable enough to run, but I’m still improving clarity and robustness step by step.  
-Recent work focused on improving load behavior and resilience under high message rates.
 
-The project is **actively under development**.
+The firmware is stable and actively evolving. Current development focuses on robustness under failure scenarios, deterministic behavior, and production-grade communication patterns.
+
 ---
+### Current Status — Strengths
+- Modular code structure separating WiFi, MQTT, sensors
+- Secure MQTT connection with embedded TLS certificates
+- Crash counter mechanism for fault detection
+- OTA update support with version control
+- Use of FreeRTOS tasks for multitasking
+
 
 ## Related Components
 
@@ -149,4 +159,17 @@ The project is **actively under development**.
 
 ## Purpose
 
-This project is built as a **practical IoT system**, focusing on real-world communication, security, and maintainable firmware design rather than experimental features.
+This project is built as a **practical IoT system**, focusing on real-world communication, security, and maintainable firmware design rather than experimental features and  repository intentionally focuses on firmware-side architecture and reliability patterns rather than end-user features.
+
+
+The project is **actively under development**.
+---
+
+## Build & Run Instructions
+1. Install ESP-IDF v5.x and set up environment.
+2. Clone the repository.
+3. Configure using `idf.py menuconfig` if needed.
+4. Build: `idf.py build`
+5. Flash: `idf.py -p /dev/ttyUSB0 flash`
+6. Monitor: `idf.py -p /dev/ttyUSB0 monitor`
+This repository focuses on firmware design; backend and UI components are intentionally minimal.
