@@ -132,36 +132,47 @@ void handle_command_json(const char *json, const char *reply_topic)
     }
 
     // 1) LED command
-    cJSON *state = cJSON_GetObjectItem(root, "state");
-    if (cJSON_IsString(state))
+    // cJSON *state = cJSON_GetObjectItem(root, "state");
+
+    cJSON *type = cJSON_GetObjectItem(root, "type");
+    cJSON *name = cJSON_GetObjectItem(root, "name");
+    cJSON *value = cJSON_GetObjectItem(root, "value");
+    cJSON *cmd_id = cJSON_GetObjectItem(root, "id");
+
+    const char *cmd_id_str = cJSON_IsString(cmd_id) ? cmd_id->valuestring : NULL;
+
+    if (cJSON_IsString(type) && cJSON_IsString(name))
     {
-        const char *v = state->valuestring;
-        int led_val = 0;
-        if (strcmp(v, "on") == 0)
+        if (strcmp(type->valuestring, "command") == 0 &&
+            strcmp(name->valuestring, "set_led") == 0)
         {
-            led_val = 1;
-        }
-        else if (strcmp(v, "off") == 0)
-        {
-            led_val = 0;
-        }
-        else
-        {
-            publish_error(reply_topic, req_id_str, "led", "invalid_value");
-            cJSON_Delete(root);
+            if (!cJSON_IsNumber(value))
+            {
+                publish_error(reply_topic, cmd_id_str, "led", "invalid_value");
+                cJSON_Delete(root);
+                return;
+            }
+
+            int led_val = value->valueint;
+            if (led_val != 0 && led_val != 1)
+            {
+                publish_error(reply_topic, cmd_id_str, "led", "invalid_value");
+                cJSON_Delete(root);
+                return;
+            }
+
+            device_busy = true;
+            state_update_led(led_val);
+
+            cJSON *extra = cJSON_CreateObject();
+            cJSON_AddNumberToObject(extra, "state", led_val);
+
+            publish_ack(reply_topic, "ok", "led", cmd_id_str, extra);
+
             device_busy = false;
+            cJSON_Delete(root);
             return;
         }
-
-        device_busy = true;
-        // mqtt_set_led(led_val); TODO : check may be need be removed whole function ,  now we use :state_update_led(led_val);
-        state_update_led(led_val);
-        cJSON *extra = cJSON_CreateObject();
-        cJSON_AddStringToObject(extra, "state", v);
-        publish_ack(reply_topic, "ok", "led", req_id_str, extra);
-        cJSON_Delete(root);
-        device_busy = false;
-        return;
     }
 
     //-------------

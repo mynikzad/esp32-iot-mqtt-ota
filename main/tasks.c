@@ -204,6 +204,6 @@ void create_tasks(void)
     xTaskCreate(mqtt_reconnect_task, "m_recon", 4096, NULL, 5, NULL);
     xTaskCreate(mqtt_queue_sender_task, "q_sender", 4096, NULL, 5, NULL);
     xTaskCreate(rollback_watchdog_task, "rollback_wd", 4096, NULL, 5, NULL);
-     xTaskCreatePinnedToCore(pwm_visual_test_task, "pwm_visual_test", 4096, NULL, 5, NULL, 1);
+    //xTaskCreatePinnedToCore(pwm_visual_test_task, "pwm_visual_test", 4096, NULL, 5, NULL, 1);
     xTaskCreate(CheckDeviceVolt, "CheckVoltage", 2048, NULL, 5, NULL);
 }
