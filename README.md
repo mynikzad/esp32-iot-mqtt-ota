@@ -37,6 +37,7 @@ Runtime changes (for example via MQTT commands) are immediately persisted, so th
 
 The firmware now follows a **state-driven architecture**.  
 Instead of directly controlling hardware through incoming commands, all behavior is now derived from a central **State Manager** that acts as the single source of truth.
+Designed for long-running field deployment
 
 ### Core Principles
 
@@ -62,6 +63,54 @@ This guarantees:
 This layer ensures that the ESP32 behaves deterministically across MQTT reconnects, OTA updates, and power cycles.
 
 ---
+## Command & Acknowledgment Protocol
+
+The device uses a structured JSON-based command/acknowledgment protocol over MQTT.
+
+### Example Command
+```json
+{
+  "req_id": "a1b2c3",
+  "type": "command",
+  "name": "set_led",
+  "value": 1
+}
+```
+
+### Example Acknowledgment
+```json
+{
+  "req_id": "a1b2c3",
+  "status": "ok",
+  "code": 0,
+  "ts": 1700000123,
+  "cmd": "led",
+  "data": {
+    "state": 1
+  }
+}
+```
+
+Each acknowledgment includes:
+- `status`: success or error
+- `code`: stable numeric result code
+- `ts`: device timestamp (ms)
+- Optional error reason for failed commands
+
+This protocol is designed for reliable field operation and backend integration.
+
+---
+
+## OTA Update & Rollback Strategy
+
+Firmware updates are performed via a dedicated FreeRTOS task, decoupled from MQTT callbacks to avoid blocking system communication.
+
+- OTA is delivered over HTTPS/MQTTs.
+- Firmware integrity is validated using SHA-256.
+- The ESP-IDF partition table enables automatic rollback on failed updates.
+- If an update fails or the device crashes repeatedly after an update, the system safely reverts to the previous firmware version.
+
+This design prevents device bricking and ensures recoverability in real-world deployments.
 
 ## High-Level Flow
 The boot-to-connection flow is kept simple: WiFi first, then secure MQTT, then tasks. This way the device stays responsive even if the network is shaky or an OTA update is running.
