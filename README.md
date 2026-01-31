@@ -1,10 +1,16 @@
 # Executive Summary
-This repository implements an IoT control system based on ESP32 and ESP-IDF. It includes WiFi, MQTT, TLS security, sensor reading, actuator control, OTA updates, and crash recovery mechanisms. The main goal of this project is to create a robust, secure, and extensible IoT device with OTA capability and fault tolerance.
-The design emphasizes deterministic behavior, recoverability after failure, and production-oriented communication patterns rather than demo-style implementations.
+This repository implements a **production-grade embedded IoT firmware** based on ESP32 and ESP-IDF.
+The system is intentionally designed for **long-running, unattended field deployment**, where failures, reboots, network loss, and OTA updates are expected rather than exceptional.
+
+Instead of demo-style feature implementation, the firmware emphasizes **deterministic behavior**, **explicit state management**, **safe recovery after failure**, and **production-oriented communication patterns**.
+
 
 ## Project Scope and Architecture
-- **Platform:** ESP32 with ESP-IDF (v5.x)
-- **Main functionalities:** WiFi connectivity, MQTT communication over TLS, sensor management (temperature, humidity, pressure), actuator PWM control, OTA update support, crash counters for safe mode.
+- **Platform:** ESP32 with ESP-IDF (v5.x), designed as a state-driven embedded system
+- **Main functionalities:** 
+The feature set is intentionally minimal and carefully selected to support reliability, debuggability, and predictable behavior in production environments.
+WiFi connectivity, MQTT communication over TLS, sensor management (temperature, humidity, pressure), actuator PWM control, OTA update support, crash counters for safe mode.
+
 - **Key modules:** `app_main.c` initializes WiFi, MQTT, sensors, manages tasks; `mqtt.c` handles secure MQTT; `config_manager.c` manages configurations stored in NVS; `crash_counter.c` tracks crashes within a time window.
 - **Certificates:** Embedded in the binary (`cert.pem`, `certs_ca.crt`) for HTTPS/MQTT TLS.
 - **Architecture Diagram:**
@@ -35,9 +41,11 @@ Runtime changes (for example via MQTT commands) are immediately persisted, so th
 
 ## State Layer Architecture (Single Source of Truth)
 
-The firmware now follows a **state-driven architecture**.  
-Instead of directly controlling hardware through incoming commands, all behavior is now derived from a central **State Manager** that acts as the single source of truth.
-Designed for long-running field deployment
+The firmware follows a **state-driven architecture**.  
+Instead of directly controlling hardware through incoming commands, all behavior is derived from a central **State Manager** that acts as the single source of truth.
+
+This approach is intentionally designed for long-running field deployment, where devices may reboot, reconnect, or recover from partial failure.
+
 
 ### Core Principles
 
@@ -208,7 +216,10 @@ The firmware is stable and actively evolving. Current development focuses on rob
 
 ## Purpose
 
-This project is built as a **practical IoT system**, focusing on real-world communication, security, and maintainable firmware design rather than experimental features and  repository intentionally focuses on firmware-side architecture and reliability patterns rather than end-user features.
+This project is built as a **practical IoT system**, focusing on real-world communication, security, and maintainable firmware design rather than experimental features.
+
+The repository intentionally focuses on firmware-side architecture and reliability patterns rather than end-user features.
+
 
 
 The project is **actively under development**.
