@@ -18,3 +18,4 @@ void state_update_led(bool state);
  */
 void state_update_sample_rate(uint32_t rate_ms);
 void state_update_sensor_enabled(bool enabled);
+void state_update_motor_power(int power);

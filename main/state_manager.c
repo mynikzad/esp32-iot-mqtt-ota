@@ -67,3 +67,11 @@ void state_update_sensor_enabled(bool enabled)
     // 3) publish state
     mqtt_state_publish();
 }
+
+#include "esp_log.h"
+
+void state_update_motor_power(int power)
+{
+    ESP_LOGI("STATE", "motor power set to %d", power);
+    // TODO: PWM / driver logic later
+}

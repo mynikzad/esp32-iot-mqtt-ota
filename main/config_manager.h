@@ -29,5 +29,7 @@ const device_config_t* config_get(void);
 void config_set_led_state(int state);
 void config_set_sample_interval(uint32_t interval);
 void  config_set_sensor_enabled(bool enabled );
+//void state_update_motor_power(int power);
+
 
 #endif

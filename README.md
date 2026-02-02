@@ -4,6 +4,9 @@ The system is intentionally designed for **long-running, unattended field deploy
 
 Instead of demo-style feature implementation, the firmware emphasizes **deterministic behavior**, **explicit state management**, **safe recovery after failure**, and **production-oriented communication patterns**.
 
+### Note: The command layer currently supports both legacy
+(system-style) and new name/value command formats.
+Migration to unified command format is in progress.
 
 ## Project Scope and Architecture
 - **Platform:** ESP32 with ESP-IDF (v5.x), designed as a state-driven embedded system
@@ -224,6 +227,12 @@ The repository intentionally focuses on firmware-side architecture and reliabili
 
 The project is **actively under development**.
 ---
+
+## Notes
+This project represents an actively evolving firmware architecture.
+Some components (e.g. actuator control, extended safety mechanisms, and test coverage)
+are intentionally left incomplete to keep the focus on architecture, reliability patterns,
+and real-world deployment concerns.
 
 ## Build & Run Instructions
 1. Install ESP-IDF v5.x and set up environment.
