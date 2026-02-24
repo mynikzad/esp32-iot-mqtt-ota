@@ -13,6 +13,13 @@ void mqtt_state_init(void)
 
 void mqtt_state_publish(void)
 {
+
+    esp_mqtt_client_handle_t client = mqtt_get_client();
+    if (!client || !mqtt_is_connected())
+    {
+        ESP_LOGW(TAG, "MQTT not ready, skipping publish");
+        return;
+    }
     // 1) جمع کردن state از config/NVS
     int led = config_get()->led_state;
     int sensor_enabled = config_get()->sensor_enabled;
@@ -32,8 +39,8 @@ void mqtt_state_publish(void)
         return;
 
     // 3) publish retained
-    esp_mqtt_client_publish( mqtt_get_client(),"device/esp32-01/state", json, 0, 1, 1 );
-       //Que-  retained = true  
+    esp_mqtt_client_publish(mqtt_get_client(), "device/esp32-01/state", json, 0, 1, 1);
+    // Que-  retained = true
 
     ESP_LOGI(TAG, "state published: %s", json);
     free(json);

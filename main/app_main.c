@@ -41,7 +41,7 @@ static void on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id, 
 
 void app_main(void)
 {
-
+    //ESP_LOGI(TAG_Main, "----------nvs_flash_init()--------------");
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -50,17 +50,17 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
     crash_counter_init();
 
-    //----------------------------------------------------------------------
 
     config_init(); // NVS init
                    //----------------------TODO: Move to file
     gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
     const device_config_t *cfg = config_get();
     ESP_LOGI("LED", "Restored LED state = %d", cfg->led_state);
-    //mqtt_set_led(cfg->led_state); TODO : check maybe this function shoukd be removed
-     state_apply();
+    // mqtt_set_led(cfg->led_state); TODO : check maybe this function shoukd be removed
+    state_apply();
     vTaskDelay(pdMS_TO_TICKS(5000));
 
     esp_log_level_set("wifi", ESP_LOG_NONE);

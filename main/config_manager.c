@@ -112,7 +112,7 @@ void config_init(void)
 {
     nvs_flash_init();
     config_load(&g_config);
-    mqtt_state_publish();
+    //mqtt_state_publish(); TODO: move to MQTT EVDENT 
 }
 
 const device_config_t *config_get(void)

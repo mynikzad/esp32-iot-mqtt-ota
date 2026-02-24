@@ -39,7 +39,7 @@ void actuator_pwm_init(void)
 
 void actuator_set_power(uint8_t percent)
 {
-    ESP_LOGI(TAG_MyTest,"Set Power: %d",percent);
+   // ESP_LOGI(TAG_MyTest,"Set Power: %d",percent);
     if (percent > 100) percent = 100;
     uint32_t duty = (percent * ((1 << PWM_RES) - 1)) / 100;
     ledc_set_duty(PWM_MODE, PWM_CHANNEL, duty);
@@ -54,7 +54,7 @@ void actuator_ramp_to(uint8_t target)
     uint8_t step = 2; // گام کوچکتر برای مشاهده بهتر (قبلاً 5 بود)
     int delay_ms = 100; // تأخیر افزایش یافته (قبلاً 20 بود)
 
-    ESP_LOGI(TAG_MyTest,"Ramp to: %d%%, starting from %d%%", target_percent, current_percent);
+    //ESP_LOGI(TAG_MyTest,"Ramp to: %d%%, starting from %d%%", target_percent, current_percent);
 
     if (current_percent < target_percent)
     {
@@ -75,7 +75,7 @@ void actuator_ramp_to(uint8_t target)
     }
     // اطمینان از رسیدن دقیق به هدف نهایی
     actuator_set_power(target_percent);
-    ESP_LOGI(TAG_MyTest,"Ramp finished.");
+    //ESP_LOGI(TAG_MyTest,"Ramp finished.");
 }
 
 

@@ -65,7 +65,7 @@ void state_update_sensor_enabled(bool enabled)
     sensor_set_enabled(enabled);
 
     // 3) publish state
-    mqtt_state_publish();
+    //mqtt_state_publish(); ،TODO: Shold be check before mqtt connect 
 }
 
 void state_update_motor_power(int power)
